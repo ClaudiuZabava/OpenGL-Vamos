@@ -62,11 +62,18 @@ codCol;
 
 // elemente pentru matricea de vizualizare si matricea de proiectie
 float Obsx, Obsy, Obsz;
-float Refx = 0.0f, Refy = 0.0f, Refz = 100.0f;
+float Refx = 300.0f, Refy = 400.0f, Refz = 100.0f;
 float Vx = 0.0, Vy = 0.0, Vz = 1.0;
-float alpha = 0.0f, beta = 0.0f, dist = 600.0f;
+float alpha = 0.22f, beta= 1.65f, dist = 1060.0f;
 float incr_alpha1 = 0.01f, incr_alpha2 = 0.01f;
 float width = 800, height = 600, znear = 0.1, fov = 45;
+
+
+float const U_MIN = -PI / 2, U_MAX = PI / 2, V_MIN = 0, V_MAX = 2 * PI;
+int const NR_PARR = 10, NR_MERID = 20;
+float step_u = (U_MAX - U_MIN) / NR_PARR, step_v = (V_MAX - V_MIN) / NR_MERID;
+float radius = 50;
+int index, index_aux;
 
 // sursa de lumina
 float xL = 500.f, yL = 0.f, zL = 400.f;
@@ -86,6 +93,7 @@ void processNormalKeys(unsigned char key, int x, int y)
 	}
 	if (key == 27)
 		exit(0);
+	//cout << "distanta de la observator la origine: " << dist << endl;
 }
 void processSpecialKeys(int key, int xx, int yy)
 {
@@ -501,11 +509,13 @@ void DestroyVBO(void)
 	glDeleteBuffers(1, &EboId8);
 	glDeleteBuffers(1, &VboId9);
 	glDeleteBuffers(1, &EboId9);
+	glDeleteBuffers(1, &VboId10);
+	glDeleteBuffers(1, &EboId10);
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &VaoId);
 }
 
-// picior
+// Poarta
 void CreateVAO7(void)
 {
 	// bara 
@@ -687,6 +697,80 @@ void CreateVAO9(void)
 
 }
 
+// Cap
+
+void CreateVAO10(void)
+{
+	// SFERA
+	// Matricele pentru varfuri, culori, indici
+	glm::vec4 Vertices1[(NR_PARR + 1) * NR_MERID];
+	glm::vec3 Colors1[(NR_PARR + 1) * NR_MERID];
+	GLushort Indices1[2 * (NR_PARR + 1) * NR_MERID + 4 * (NR_PARR + 1) * NR_MERID];
+	for (int merid = 0; merid < NR_MERID; merid++)
+	{
+		for (int parr = 0; parr < NR_PARR + 1; parr++)
+		{
+			// implementarea reprezentarii parametrice 
+			float u = U_MIN + parr * step_u; // valori pentru u si v
+			float v = V_MIN + merid * step_v;
+			float x_vf = radius * cosf(u) * cosf(v); // coordonatele varfului corespunzator lui (u,v)
+			float y_vf = radius * cosf(u) * sinf(v);
+			float z_vf = radius * sinf(u);
+
+			// identificator ptr varf; coordonate + culoare + indice la parcurgerea meridianelor
+			index = merid * (NR_PARR + 1) + parr;
+			Vertices1[index] = glm::vec4(x_vf, y_vf, z_vf + 480, 2.0);
+			Colors1[index] = glm::vec3(0.1f + sinf(u), 0.1f + cosf(v), 0.1f + -1.5 * sinf(u));
+			Indices1[index] = index;
+
+			// indice ptr acelasi varf la parcurgerea paralelelor
+			index_aux = parr * (NR_MERID)+merid;
+			Indices1[(NR_PARR + 1) * NR_MERID + index_aux] = index;
+
+			// indicii pentru desenarea fetelor, pentru varful curent sunt definite 4 varfuri
+			if ((parr + 1) % (NR_PARR + 1) != 0) // varful considerat sa nu fie Polul Nord
+			{
+				int AUX = 2 * (NR_PARR + 1) * NR_MERID;
+				int index1 = index; // varful v considerat
+				int index2 = index + (NR_PARR + 1); // dreapta lui v, pe meridianul urmator
+				int index3 = index2 + 1;  // dreapta sus fata de v
+				int index4 = index + 1;  // deasupra lui v, pe acelasi meridian
+				if (merid == NR_MERID - 1)  // la ultimul meridian, trebuie revenit la meridianul initial
+				{
+					index2 = index2 % (NR_PARR + 1);
+					index3 = index3 % (NR_PARR + 1);
+				}
+				Indices1[AUX + 4 * index] = index1;  // unele valori ale lui Indices, corespunzatoare Polului Nord, au valori neadecvate
+				Indices1[AUX + 4 * index + 1] = index2;
+				Indices1[AUX + 4 * index + 2] = index3;
+				Indices1[AUX + 4 * index + 3] = index4;
+			}
+		}
+	};
+
+	// generare VAO/buffere
+	glGenVertexArrays(1, &VaoId10);
+	glBindVertexArray(VaoId10);
+	glGenBuffers(1, &VboId10); // atribute
+	glGenBuffers(1, &EboId10); // indici
+
+	// legare+"incarcare" buffer
+	glBindBuffer(GL_ARRAY_BUFFER, VboId10);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices1) + sizeof(Colors1), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertices1), Vertices1);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(Vertices1), sizeof(Colors1), Colors1);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EboId10);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices1), Indices1, GL_STATIC_DRAW);
+
+	// atributele; 
+	glEnableVertexAttribArray(0); // atributul 0 = pozitie
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(0));
+	glEnableVertexAttribArray(1); // atributul 1 = culoare
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)(sizeof(Vertices1)));
+
+
+}
+
 
 
 
@@ -713,6 +797,7 @@ void Initialize(void)
 	CreateVAO7();
 	CreateVAO8();
 	CreateVAO9();
+	CreateVAO10();
 	viewLocation = glGetUniformLocation(ProgramId, "view");
 	projLocation = glGetUniformLocation(ProgramId, "projection");
 	matrUmbraLocation = glGetUniformLocation(ProgramId, "matrUmbra");
@@ -730,6 +815,10 @@ void RenderFunction(void)
 	Obsx = Refx + dist * cos(alpha) * cos(beta);
 	Obsy = Refy + dist * cos(alpha) * sin(beta);
 	Obsz = Refz + dist * sin(alpha);
+	//cout << "Obsx=" << Obsx << " Obsy=" << Obsy << " Obsz=" << Obsz << endl;
+	//Obsx = 166.274f;
+	//Obsy = 1354.45f;
+	//Obsx = 366.731;
 	glm::vec3 Obs = glm::vec3(Obsx, Obsy, Obsz);
 	glm::vec3 PctRef = glm::vec3(Refx, Refy, Refz);
 	glm::vec3 Vert = glm::vec3(Vx, Vy, Vz);
@@ -808,6 +897,20 @@ void RenderFunction(void)
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
 
+	//buffer 10
+	glBindVertexArray(VaoId10);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
+	}
+
 
 
 	// umbra 2
@@ -839,6 +942,20 @@ void RenderFunction(void)
 	codCol = 1;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+	
+	// umbra cap
+	glBindVertexArray(VaoId10);
+	codCol = 1;
+	glUniform1i(codColLocation, codCol);
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
+	}
 	
 
 
