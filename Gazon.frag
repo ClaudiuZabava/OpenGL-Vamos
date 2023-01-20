@@ -14,12 +14,15 @@ void main(void)
             break;
         case 2:
             out_Color=vec4(0.25, 0.25, 0.45 ,0.0); 
-			    break;
+			break;
         case 3:
             out_Color=vec4(0.5, 0.5, 0.5 ,0.0); 
 			break;
         case 4:
             out_Color=vec4(0.75, 0.75, 0.75 ,0.5);
+            break;
+        case 5:
+            out_Color=vec4(0.25, 0.25, 0.45 ,0.3);
             break;
         default: 
             out_Color=ex_Color;

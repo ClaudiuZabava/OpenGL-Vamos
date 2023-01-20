@@ -26,6 +26,9 @@ VaoId8,
 VaoId9,
 VaoId10,
 VaoId11,
+VaoId12,
+VaoId13,
+VaoId14,
 
 VboId1,
 EboId1,
@@ -49,6 +52,13 @@ EboId9,
 EboId10,
 VboId11,
 EboId11,
+VboId12,
+EboId12,
+VboId13,
+EboId13,
+VboId14,
+EboId14,
+
 
 
 ProgramId,
@@ -68,9 +78,10 @@ codCol;
 float Obsx, Obsy, Obsz;
 float Refx = 300.0f, Refy = 400.0f, Refz = 100.0f;
 float Vx = 0.0, Vy = 0.0, Vz = 1.0;
-float alpha = 0.22f, beta= 1.65f, dist = 1060.0f;
+float alpha = 0.22f, beta = 1.65f, dist = 1060.0f;
 float incr_alpha1 = 0.01f, incr_alpha2 = 0.01f;
 float width = 800, height = 600, znear = 0.1, fov = 45;
+bool isFalling = false, isStopped = false;
 
 
 float const U_MIN = -PI / 2, U_MAX = PI / 2, V_MIN = 0, V_MAX = 2 * PI;
@@ -79,13 +90,13 @@ float step_u = (U_MAX - U_MIN) / NR_PARR, step_v = (V_MAX - V_MIN) / NR_MERID;
 float radius = 50;
 
 int index, index_aux;
-float i1=0.0f, alpha1=0.0f, i2=0.0f, alpha2=0.0f;
+float i1 = 0.0f, alpha1 = 0.0f, i2 = 0.0f, alpha2 = 0.0f, i3 = 0.0f, alpha3 = 0.0f, i4 = 0.0f;
 
 // sursa de lumina
 float xL = 500.f, yL = 0.f, zL = 400.f;
 
 // matrice
-glm::mat4 view, projection, matrUmbra, matrRot1, matrRotDefault, matrTranslDefault, oldView, matrTransl2;
+glm::mat4 view, projection, matrUmbra, matrRot1, matrRotDefault, matrTranslDefault, oldView, matrTransl2, matrTranslModif;
 
 void movement(void)
 {
@@ -97,16 +108,35 @@ void movement(void)
 	}
 	if (i1 <= -0.75)
 	{
-		alpha2 = 5.0f;
+		if(isFalling == false && i2 <= 690)
+			alpha2 = 5.0f;
 	}
 
-	
-	i2 = i2 + alpha2;
-	if( i2 > 600)
+	if (!isFalling)
+	{
+		i2 = i2 + alpha2;
+		i3 = i2 / 4;
+		i4 = i2 / 3;
+	}
+	if (i2 >=690)
+	{
+		isFalling = true;
+	}
+	if (isFalling == true && isStopped == false)
 	{
 		alpha2 = 0.0f;
+		alpha3 = -3.0f;
+		i2 = i2 + alpha3;
+		i3 = i3 + alpha3;
+		i4 = i3;
+		if (i4 <= 5)
+		{
+			isStopped = true;
+			alpha2 = 0.0f;
+			alpha3 = 0.0f;
+		}
 	}
-	
+
 
 	glutPostRedisplay();
 
@@ -233,26 +263,15 @@ void CreateVAO2(void)
 	// 
 	GLfloat Vertices2[] =
 	{
-		-20.0f, -30.0f, 115.0f, 1.0f,
-		 20.0f, -30.0f, 115.0f, 1.0f,
-		 20.0f,  30.0f, 115.0f, 1.0f,
-		-20.0f,  30.0f, 115.0f, 1.0f,
-		-20.0f, -30.0f, 215.0f, 1.0f,
-		 20.0f, -30.0f, 215.0f, 1.0f,
-		 20.0f,  30.0f, 215.0f, 1.0f,
-		-20.0f,  30.0f, 215.0f, 1.0f
-	};
-
-	GLfloat Colors2[] =
-	{
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f
+		// coordonate                   // culori			    // normale
+		-20.0f, -30.0f, 115.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		20.0f, -30.0f, 115.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		20.0f,  30.0f, 115.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		-20.0f,  30.0f, 115.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+		-20.0f, -30.0f, 215.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f, -1.0f, -1.0f, 1.0f,
+		20.0f, -30.0f, 215.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f, 1.0f, -1.0f, 1.0f,
+		20.0f,  30.0f, 215.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, 1.0f,
+		-20.0f,  30.0f, 215.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, 1.0f,
 	};
 
 	GLushort Indices2[] =
@@ -262,7 +281,7 @@ void CreateVAO2(void)
 	  7, 3, 4,   4, 3, 0,
 	  4, 0, 5,   5, 0, 1,
 	  1, 2, 5,   5, 2, 6,
-	  5, 6, 4,   4, 6, 7,
+	  5, 6, 4,   4, 6, 7
 	};
 
 	// generare VAO/buffere
@@ -271,19 +290,18 @@ void CreateVAO2(void)
 	glGenBuffers(1, &VboId2); // atribute
 	glGenBuffers(1, &EboId2); // indici
 
-	// legare+"incarcare" buffer
 	glBindBuffer(GL_ARRAY_BUFFER, VboId2);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices2) + sizeof(Colors2), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertices2), Vertices2);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(Vertices2), sizeof(Colors2), Colors2);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices2), Vertices2, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EboId2);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices2), Indices2, GL_STATIC_DRAW);
 
 	// atributele; 
 	glEnableVertexAttribArray(0); // atributul 0 = pozitie
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(0));
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(1); // atributul 1 = culoare
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)(sizeof(Vertices2)));
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(4 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2); // atributul 2 = normale
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
 }
 // picior
 void CreateVAO3(void)
@@ -559,8 +577,27 @@ void DestroyVBO(void)
 	glDeleteBuffers(1, &EboId10);
 	glDeleteBuffers(1, &VboId11);
 	glDeleteBuffers(1, &EboId11);
+	glDeleteBuffers(1, &VboId12);
+	glDeleteBuffers(1, &EboId12);
+	glDeleteBuffers(1, &VboId13);
+	glDeleteBuffers(1, &EboId13);
+	glDeleteBuffers(1, &VboId14);
+	glDeleteBuffers(1, &EboId14);
 	glBindVertexArray(0);
 	glDeleteVertexArrays(1, &VaoId);
+	glDeleteVertexArrays(1, &VaoId2);
+	glDeleteVertexArrays(1, &VaoId3);
+	glDeleteVertexArrays(1, &VaoId4);
+	glDeleteVertexArrays(1, &VaoId5);
+	glDeleteVertexArrays(1, &VaoId6);
+	glDeleteVertexArrays(1, &VaoId7);
+	glDeleteVertexArrays(1, &VaoId8);
+	glDeleteVertexArrays(1, &VaoId9);
+	glDeleteVertexArrays(1, &VaoId10);
+	glDeleteVertexArrays(1, &VaoId11);
+	glDeleteVertexArrays(1, &VaoId12);
+	glDeleteVertexArrays(1, &VaoId13);
+	glDeleteVertexArrays(1, &VaoId14);
 }
 
 // Poarta
@@ -841,7 +878,7 @@ void CreateVAO11(void)
 
 			// identificator ptr varf; coordonate + culoare + indice la parcurgerea meridianelor
 			index = merid * (NR_PARR + 1) + parr;
-			Vertices1[index] = glm::vec4(x_vf+225, y_vf, z_vf +55, 2.3);
+			Vertices1[index] = glm::vec4(x_vf + 225, y_vf, z_vf + 55, 2.3);
 			Colors1[index] = glm::vec3(0.1f + sinf(u), 0.1f + cosf(v), 0.1f + -1.5 * sinf(u));
 			Indices1[index] = index;
 
@@ -893,6 +930,126 @@ void CreateVAO11(void)
 
 }
 
+void CreateVAO12(void)
+{
+
+	// CUBUL 
+	// 
+	GLfloat Vertices2[] =
+	{
+		// coordonate                   // culori			    // normale
+		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		900.0f, -300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f,  300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f, -1.0f, -1.0f, 1.0f,
+	};
+
+	GLushort Indices2[] =
+	{
+	  1, 2, 0,   2, 0, 3,
+	  2, 3, 4,   4, 3, 0,
+	};
+
+	// generare VAO/buffere
+	glGenVertexArrays(1, &VaoId12);
+	glBindVertexArray(VaoId12);
+	glGenBuffers(1, &VboId12); // atribute
+	glGenBuffers(1, &EboId12); // indici
+
+	glBindBuffer(GL_ARRAY_BUFFER, VboId12);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices2), Vertices2, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EboId12);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices2), Indices2, GL_STATIC_DRAW);
+
+	// atributele; 
+	glEnableVertexAttribArray(0); // atributul 0 = pozitie
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1); // atributul 1 = culoare
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(4 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2); // atributul 2 = normale
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
+}
+
+
+void CreateVAO13(void)
+{
+
+	// CUBUL 
+	// 
+	GLfloat Vertices2[] =
+	{
+		// coordonate                   // culori			    // normale
+		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		710.0f, -300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f, -300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  -300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+	};
+
+	GLushort Indices2[] =
+	{
+	  1, 2, 0,   2, 0, 3
+	};
+
+	// generare VAO/buffere
+	glGenVertexArrays(1, &VaoId13);
+	glBindVertexArray(VaoId13);
+	glGenBuffers(1, &VboId13); // atribute
+	glGenBuffers(1, &EboId13); // indici
+
+	glBindBuffer(GL_ARRAY_BUFFER, VboId13);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices2), Vertices2, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EboId13);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices2), Indices2, GL_STATIC_DRAW);
+
+	// atributele; 
+	glEnableVertexAttribArray(0); // atributul 0 = pozitie
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1); // atributul 1 = culoare
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(4 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2); // atributul 2 = normale
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
+}
+
+void CreateVAO14(void)
+{
+
+	// CUBUL 
+	// 
+	GLfloat Vertices2[] =
+	{
+		// coordonate                   // culori			    // normale
+		710.0f, 300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		710.0f, 300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f, 300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+	};
+
+	GLushort Indices2[] =
+	{
+	  1, 2, 0,   2, 0, 3
+	};
+
+	// generare VAO/buffere
+	glGenVertexArrays(1, &VaoId14);
+	glBindVertexArray(VaoId14);
+	glGenBuffers(1, &VboId14); // atribute
+	glGenBuffers(1, &EboId14); // indici
+
+	glBindBuffer(GL_ARRAY_BUFFER, VboId14);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices2), Vertices2, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EboId14);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices2), Indices2, GL_STATIC_DRAW);
+
+	// atributele; 
+	glEnableVertexAttribArray(0); // atributul 0 = pozitie
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1); // atributul 1 = culoare
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(4 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2); // atributul 2 = normale
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
+}
+
 
 
 
@@ -921,6 +1078,9 @@ void Initialize(void)
 	CreateVAO9();
 	CreateVAO10();
 	CreateVAO11();
+	CreateVAO12();
+	CreateVAO13();
+	CreateVAO14();
 	viewLocation = glGetUniformLocation(ProgramId, "view");
 	projLocation = glGetUniformLocation(ProgramId, "projection");
 	matrUmbraLocation = glGetUniformLocation(ProgramId, "matrUmbra");
@@ -1001,7 +1161,7 @@ void RenderFunction(void)
 	codCol = 3;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
-	
+
 	// buffer 8
 	glBindVertexArray(VaoId8);
 	codCol = 3;
@@ -1027,6 +1187,36 @@ void RenderFunction(void)
 				GL_UNSIGNED_SHORT,
 				(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
 	}
+	
+	
+	// desenare obiecte TRANSPARENTE 
+	
+	glEnable(GL_BLEND);
+	//glDepthMask(GL_FALSE);
+	glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA); // de testat alte variante https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glBlendFunc.xhtml si factori-destinatie: GL_ONE, GL_DST_ALPHA, GL_ONE_MINUS_SRC_ALPHA
+	
+	// plasa-mare
+	glBindVertexArray(VaoId12);
+	codCol = 0;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_BYTE, 0);  // plasa
+
+	// plasa-stanga
+	glBindVertexArray(VaoId13);
+	codCol = 0;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);  // plasa
+
+	// dreapta
+	glBindVertexArray(VaoId14);
+	codCol = 0;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, 0);  // plasa
+	
+	
+	
+	glDepthMask(GL_TRUE);
+	glDisable(GL_BLEND);
 
 
 
@@ -1053,7 +1243,7 @@ void RenderFunction(void)
 	codCol = 1;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
-	
+
 	// umbra cap
 	glBindVertexArray(VaoId10);
 	codCol = 1;
@@ -1087,22 +1277,22 @@ void RenderFunction(void)
 
 
 
-	
 
-//=====================================================================================!!!!=============================================================
-//==========================================  Aici se lucreaza la miscarea obiectelor 3d, afectand matricile de proiectie / view =======================
-// ================================== Daca vreti sa creati alte VAO si sa le adaugati, dati paste deasupra acestie linii, NU dedesubt ==================
 
-	
+	//=====================================================================================!!!!=============================================================
+	//==========================================  Aici se lucreaza la miscarea obiectelor 3d, afectand matricile de proiectie / view =======================
+	// ================================== Daca vreti sa creati alte VAO si sa le adaugati, dati paste deasupra acestie linii, NU dedesubt ==================
+
+
 	oldView = view;
 	oldLocation = viewLocation;
-	
+
 	//matrRot1 = glm::rotate(glm::mat4(1.0f), i1, glm::vec3(-0.115, -0.033, 0.5));
 	matrRotDefault = glm::rotate(glm::mat4(1.0f), 3.14f, glm::vec3(0.0, -50.0, 0.5));
 	matrTranslDefault = glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.0, 120.0));
 	matrRot1 = glm::rotate(glm::mat4(1.0f), i1, glm::vec3(0.0, 50.0, 0.5));
-	
-	view = view * matrTranslDefault *matrRotDefault * matrRot1;
+
+	view = view * matrTranslDefault * matrRotDefault * matrRot1;
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
 	//buffer 3
@@ -1116,12 +1306,14 @@ void RenderFunction(void)
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &projection[0][0]);
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
+	// inline function to choose i3 if isFalling is true otherwise to choose i3
 
-	matrTransl2 = glm::translate(glm::mat4(1.0f), glm::vec3(i2, 0.0, i2/4));
-	
+
+	matrTransl2 = glm::translate(glm::mat4(1.0f), glm::vec3(i2, i3, i4));
+
 	view = view * matrTransl2;
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
-	
+
 	//buffer 11 - minge
 	glBindVertexArray(VaoId11);
 	codCol = 3;
@@ -1135,21 +1327,154 @@ void RenderFunction(void)
 				GL_UNSIGNED_SHORT,
 				(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
 	}
-	
-	
+
+
 	view = oldView;
 	viewLocation = oldLocation;
 	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &projection[0][0]);
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
-//===============================================================================  Fara paste aici =======================================================
-	
-	
-	
-	
 
-	
-	//projection = oldProjection;
+	////////////////////////////////////////////////////PORTAR///////////////////////////////////////////////////////////////////
+
+
+
+	matrTranslModif = glm::translate(glm::mat4(1.0f), glm::vec3(550.0, 0.0, 0.0));
+
+	view = view * matrTranslModif;
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+
+	// buffer 2
+	glBindVertexArray(VaoId2);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+	//buffer 3
+	glBindVertexArray(VaoId3);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+	// buffer 4
+	glBindVertexArray(VaoId4);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+	// buffer 5
+	glBindVertexArray(VaoId5);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+	// buffer 6
+	glBindVertexArray(VaoId6);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+
+	//buffer 10
+	glBindVertexArray(VaoId10);
+	codCol = 2;
+	glUniform1i(codColLocation, codCol);
+	for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+	{
+		if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+			glDrawElements(
+				GL_QUADS,
+				4,
+				GL_UNSIGNED_SHORT,
+				(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
+	}
+
+	view = oldView;
+	viewLocation = oldLocation;
+	glUniformMatrix4fv(projLocation, 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	//////////////////////////////////////////////////SPECTATOR////////////////////////////////////////////////////////////
+
+	for (float contor = -400.0f; contor <= 400.0f; contor += 150.0f)
+	{
+		matrTranslModif = glm::translate(glm::mat4(1.0f), glm::vec3(-650.0, contor, 0.0));
+
+		view = view * matrTranslModif;
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+
+		// buffer 2
+		glBindVertexArray(VaoId2);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+		//buffer 3
+		glBindVertexArray(VaoId3);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+		// buffer 4
+		glBindVertexArray(VaoId4);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+		// buffer 5
+		glBindVertexArray(VaoId5);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+		// buffer 6
+		glBindVertexArray(VaoId6);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+
+
+		//buffer 10
+		glBindVertexArray(VaoId10);
+		codCol = 5;
+		glUniform1i(codColLocation, codCol);
+		for (int patr = 0; patr < (NR_PARR + 1) * NR_MERID; patr++)
+		{
+			if ((patr + 1) % (NR_PARR + 1) != 0) // nu sunt considerate fetele in care in stanga jos este Polul Nord
+				glDrawElements(
+					GL_QUADS,
+					4,
+					GL_UNSIGNED_SHORT,
+					(GLvoid*)((2 * (NR_PARR + 1) * (NR_MERID)+4 * patr) * sizeof(GLushort)));
+		}
+
+		view = oldView;
+		viewLocation = oldLocation;
+		glUniformMatrix4fv(projLocation, 1, GL_FALSE, &projection[0][0]);
+		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+	}
+
+
+
+
+
+	//===============================================================================  Fara paste aici =======================================================
+
+
+
+
+
+
+		//projection = oldProjection;
 
 
 	glDepthMask(GL_TRUE);
