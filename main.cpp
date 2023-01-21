@@ -1,15 +1,22 @@
-#include <windows.h>  
+﻿#include <windows.h>  
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
 #include <GL/glew.h> 
+#include <GL/gl.h>
 #include <GL/freeglut.h> 
 #include "loadShaders.h"
 #include "glm/glm.hpp"  
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
+// quaternions:
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtc/quaternion.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 
 using namespace std;
 float PI = 3.141592;
@@ -72,6 +79,7 @@ codColLocation,
 lightColorLoc,
 lightPosLoc,
 viewPosLoc,
+quatViewLocation,
 codCol;
 
 // elemente pentru matricea de vizualizare si matricea de proiectie
@@ -90,13 +98,17 @@ float step_u = (U_MAX - U_MIN) / NR_PARR, step_v = (V_MAX - V_MIN) / NR_MERID;
 float radius = 50;
 
 int index, index_aux;
-float i1 = 0.0f, alpha1 = 0.0f, i2 = 0.0f, alpha2 = 0.0f, i3 = 0.0f, alpha3 = 0.0f, i4 = 0.0f;
+float i1 = 0.0f, alpha1 = 0.0f, i2 = 0.0f, alpha2 = 0.0f, i3 = 0.0f, alpha3 = 0.0f, i4 = 0.0f, 
+i5 = 0.0f, alpha5 = -0.05f, i6 = 0.0f, alpha6 = 10.0f,
+i7 = 0.0f, alpha7 = 0.05f, i8 = 0.0f, alpha8 = -10.0f;
 
 // sursa de lumina
 float xL = 500.f, yL = 0.f, zL = 400.f;
 
 // matrice
-glm::mat4 view, projection, matrUmbra, matrRot1, matrRotDefault, matrTranslDefault, oldView, matrTransl2, matrTranslModif;
+glm::mat4 view, projection, matrUmbra, matrRot1, matrRotDefault, matrTranslDefault, 
+oldView, matrTransl2, matrTranslModif, quatView, matrTransl3;
+
 
 void movement(void)
 {
@@ -135,6 +147,30 @@ void movement(void)
 			alpha2 = 0.0f;
 			alpha3 = 0.0f;
 		}
+	}
+
+	i5 = i5 + alpha5;
+	if (i5 <= -0.5)
+	{
+		alpha5 = 0.0f;
+	}
+
+	i6 = i6 + alpha6;
+	if (i6 >= 110.0f)
+	{
+		alpha6 = 0.0f;
+	}
+
+	i7 = i7 + alpha7;
+	if (i7 >= 0.5)
+	{
+		alpha7 = 0.0f;
+	}
+
+	i8 = i8 + alpha8;
+	if (i8 <= -110.0f)
+	{
+		alpha8 = 0.0f;
 	}
 
 
@@ -933,16 +969,16 @@ void CreateVAO11(void)
 void CreateVAO12(void)
 {
 
-	// CUBUL 
+	// plasa 
 	// 
 	GLfloat Vertices2[] =
 	{
 		// coordonate                   // culori			    // normale
-		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
-		900.0f, -300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
-		900.0f,  300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
-		710.0f,  300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
-		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f, -1.0f, -1.0f, 1.0f,
+		710.0f, -320.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		900.0f, -320.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f,  320.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  320.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+		710.0f, -320.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f, -1.0f, -1.0f, 1.0f,
 	};
 
 	GLushort Indices2[] =
@@ -975,15 +1011,15 @@ void CreateVAO12(void)
 void CreateVAO13(void)
 {
 
-	// CUBUL 
+	// plasa
 	// 
 	GLfloat Vertices2[] =
 	{
 		// coordonate                   // culori			    // normale
-		710.0f, -300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
-		710.0f, -300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
-		900.0f, -300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
-		710.0f,  -300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+		710.0f, -320.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		710.0f, -320.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f, -320.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  -320.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
 	};
 
 	GLushort Indices2[] =
@@ -1011,18 +1047,17 @@ void CreateVAO13(void)
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid*)(8 * sizeof(GLfloat)));
 }
 
+// plasa
 void CreateVAO14(void)
 {
-
-	// CUBUL 
 	// 
 	GLfloat Vertices2[] =
 	{
 		// coordonate                   // culori			    // normale
-		710.0f, 300.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
-		710.0f, 300.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
-		900.0f, 300.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
-		710.0f,  300.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
+		710.0f, 320.0f, 385.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  -1.0f, -1.0f, -1.0f,
+		710.0f, 320.0f, 0.0f, 1.0f,  0.0f, 0.5f, 0.9f, 0.5f,  1.0f, -1.0f, -1.0f,
+		900.0f, 320.0f, 0.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, 1.0f, 1.0f, -1.0f,
+		710.0f,  320.0f, 385.0f, 1.0f,   0.0f, 0.5f, 0.9f, 0.5f, -1.0f, 1.0f, -1.0f,
 	};
 
 	GLushort Indices2[] =
@@ -1143,20 +1178,41 @@ void RenderFunction(void)
 	codCol = 2;
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
+	
+	
 
 	// buffer 5
 	glBindVertexArray(VaoId5);
+
+	// quaternion pentru rotatia copacilor
+
+	glm::vec3 EulerAngles(0.0, i5, 0.0);
+	glm::quat quaternionRotatie = glm::quat(EulerAngles); // in radiani
+	matrTransl3 = glm::translate(glm::mat4(1.0f), glm::vec3(i6, 0.0f, -i6/3.5f));
+	quatViewLocation = viewLocation;
+	quatView = view * glm::mat4_cast(quaternionRotatie) * matrTransl3;
 	codCol = 2;
 	glUniform1i(codColLocation, codCol);
+	glUniformMatrix4fv(quatViewLocation, 1, GL_FALSE, &quatView[0][0]);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
 
 	// buffer 6
 	glBindVertexArray(VaoId6);
+
+	// quaternion pentru rotatia copacilor
+
+	glm::vec3 EulerAngles2(0.0, i7, 0.0);
+	glm::quat quaternionRotatie2 = glm::quat(EulerAngles2); // in radiani
+	matrTransl3 = glm::translate(glm::mat4(1.0f), glm::vec3(i8, 0.0f, i8 / 3.5f));
+	quatViewLocation = viewLocation;
+	quatView = view * glm::mat4_cast(quaternionRotatie2) * matrTransl3;
 	codCol = 2;
 	glUniform1i(codColLocation, codCol);
+	glUniformMatrix4fv(quatViewLocation, 1, GL_FALSE, &quatView[0][0]);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
 
 	// buffer 7
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 	glBindVertexArray(VaoId7);
 	codCol = 3;
 	glUniform1i(codColLocation, codCol);
@@ -1226,6 +1282,7 @@ void RenderFunction(void)
 	glUniform1i(codColLocation, codCol);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (GLvoid*)(0));
 
+	
 	// umbra 4
 	glBindVertexArray(VaoId4);
 	codCol = 1;
@@ -1483,6 +1540,32 @@ void RenderFunction(void)
 	glutSwapBuffers();
 	glFlush();
 }
+
+void BumpMappingTextureCreate(void)
+{
+	// textura bump mapping
+
+
+	unsigned char* data = (unsigned char*)"texture_image.png";
+	// Încărcare texturi
+	GLuint diffuseTexture;
+	glGenTextures(1, &diffuseTexture);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	GLuint normalTexture;
+	glGenTextures(1, &normalTexture);
+	glBindTexture(GL_TEXTURE_2D, normalTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+	// Activarea texturilor
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalTexture);
+}
+
 void Cleanup(void)
 {
 	DestroyShaders();
